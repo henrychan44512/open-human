@@ -1,0 +1,6 @@
+# 批处理必须保持 CRLF：cmd.exe 按行解析，LF-only 的 .cmd 会解析错位。
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# 其余按文本处理
+* text=auto

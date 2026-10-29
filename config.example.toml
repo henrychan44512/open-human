@@ -1,0 +1,29 @@
+# Open Human 配置模板。
+# 复制成 config.toml 后修改。config.toml 不进 git（可能含 key）。
+
+[app]
+# 默认用哪个后端：llama | deepseek
+default_model = "llama"
+# 一次回复的硬上限（token）。BUILD.md §11 N-06：默认短回复。
+max_reply_tokens = 400
+
+[llama]
+# 也可以用环境变量 LLAMA_BASE_URL 覆盖（config.py:load_config）
+base_url = "http://127.0.0.1:8080"
+model = "MiniCPM5-2B"
+# 权重路径，相对项目根
+model_file = "models/MiniCPM5-2B-Q4_K_M.gguf"
+# 本地 llama-server 不校验 key，留空即可
+api_key = ""
+temperature = 0.75
+top_p = 0.9
+# 8K 上限（BUILD.md §7）
+context = 8192
+
+[deepseek]
+base_url = "https://api.deepseek.com"
+model = "deepseek-chat"
+# 从环境变量 DEEPSEEK_API_KEY 读，不要写在这里
+api_key = ""
+temperature = 0.95
+top_p = 0.95

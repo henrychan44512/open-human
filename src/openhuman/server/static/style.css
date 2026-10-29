@@ -1,0 +1,717 @@
+/* Open Human —— 冷壳，人味在里面。
+   没有框架、没有构建步骤，改完刷新即生效。 */
+
+:root {
+  --bg: #0a0c0f;
+  --ink: #ece6dc;
+  --dim: rgba(236, 230, 220, 0.46);
+  --faint: rgba(236, 230, 220, 0.17);
+  --ghost: rgba(236, 230, 220, 0.09);
+  --hair: rgba(236, 230, 220, 0.07);
+  --warm: #d9b487;
+  /* 机器用等宽，人用衬线：一边是终端，一边是旧书 */
+  --mono: "Cascadia Mono", "SF Mono", Consolas, "Noto Sans SC", "Microsoft YaHei", monospace;
+  --serif: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "SimSun", "STSong", serif;
+  --col: 720px;
+
+  /* 纵深的几个旋钮。
+     --px/--py 是鼠标在窗口里的位置（-0.5..0.5），两层光按不同的幅度跟着走，
+     一个走得多、一个走得少，眼睛就读出前后了。
+     --warm-amp / --vig-edge 由时段（body[data-phase]）调，屋子跟着天光走。 */
+  --px: 0;
+  --py: 0;
+  --warm-amp: 0.15;
+  --cool-amp: 0.1;
+  --vig-edge: 0.62;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 16px;
+  line-height: 1.95;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 两道极淡的框：外圈是机器边框，里圈是窗。
+   两只眼睛一比，就读出玻璃离你有多远。 */
+html::before {
+  content: "";
+  position: fixed;
+  inset: 7px;
+  border: 1px solid rgba(236, 230, 220, 0.032);
+  pointer-events: none;
+  z-index: 1;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 20px;
+  border: 1px solid var(--hair);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 扫描线 + 噪点 */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.013) 0 1px, transparent 1px 3px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* 暗角；等待时更暗。夜里收得更紧 —— 屋子小了，人就在近处 */
+.vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(ellipse at 50% 46%, transparent 38%, rgba(0, 0, 0, var(--vig-edge)) 100%);
+  /* 上下两条边再压一道暗，像屏幕有厚度：上下离你近，中间离你远 */
+  box-shadow:
+    inset 0 44px 70px -46px rgba(0, 0, 0, 0.8),
+    inset 0 -40px 62px -38px rgba(0, 0, 0, 0.78);
+  transition: opacity 1.3s ease;
+  opacity: 0.82;
+}
+body.waiting .vignette { opacity: 1; }
+
+/* 聊天页的人在下半屏：光就该打在那儿，上面那片空黑让它退得更远 */
+body.chat .vignette {
+  background: radial-gradient(ellipse at 50% 62%, transparent 36%, rgba(0, 0, 0, var(--vig-edge)) 100%);
+}
+
+/* 上面一层冷光，像屏幕背后有扇窗；下面一层暖光，像屋里有人。
+   两层离得不一样远：鼠标一动，它们走不同的步子 —— 这就是纵深。 */
+.aura {
+  position: fixed;
+  inset: -40px;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 40% 24% at 50% 2%,
+    rgba(150, 178, 205, var(--cool-amp)),
+    rgba(150, 178, 205, 0.018) 46%,
+    transparent 74%
+  );
+  animation: drift 19s ease-in-out infinite;
+  transform: translate3d(calc(var(--px) * -9px), calc(var(--py) * -6px), 0);
+  transition: opacity 3s ease;
+}
+
+@keyframes drift {
+  0%, 100% { opacity: 0.66; }
+  50% { opacity: 1; }
+}
+
+/* 屏幕后面有一点体温：几乎看不见，十一秒一次呼吸 */
+.glow {
+  position: fixed;
+  inset: -40px;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 62% 44% at 50% 74%,
+    rgba(217, 180, 135, var(--warm-amp)),
+    rgba(217, 180, 135, 0.03) 44%,
+    transparent 74%
+  );
+  animation: breathing 11s ease-in-out infinite;
+  transform: translate3d(calc(var(--px) * 16px), calc(var(--py) * 11px), 0);
+  transition: opacity 2.6s ease;
+}
+
+/* 屋子跟着天光走。差得很少（几个百分点），但不该一样：
+   同一个陈建国，早上七点和半夜十二点不是同一种暗。 */
+body[data-phase="dawn"] { --warm-amp: 0.16; --cool-amp: 0.095; --vig-edge: 0.58; }
+body[data-phase="day"]  { --warm-amp: 0.14; --cool-amp: 0.08; }
+body[data-phase="dusk"] { --warm-amp: 0.17; --cool-amp: 0.07; --vig-edge: 0.66; }
+body[data-phase="night"] { --warm-amp: 0.1; --cool-amp: 0.13; --vig-edge: 0.72; }
+@keyframes breathing {
+  0%, 100% { opacity: 0.55; }
+  46% { opacity: 1; }
+  54% { opacity: 0.96; }
+}
+body.waiting .glow { opacity: 1.35; }
+body.idle .glow { opacity: 0.3; }
+
+.screen {
+  position: relative;
+  z-index: 3;
+  height: 100%;
+  padding: 46px clamp(26px, 6vw, 90px) 24px;
+  transition: transform 2.6s ease;
+}
+
+/* 屋子暗下来的时候，镜头也退一点点：不是变黑，是变远 */
+body.idle .screen { transform: scale(0.997); }
+
+.column {
+  position: relative;
+  width: 100%;
+  max-width: var(--col);
+  height: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  transition: filter 0.45s ease, transform 0.45s ease, opacity 0.45s ease;
+}
+
+/* 记忆卡打开的时候，屋子往后退一层：卡片是前景，其余退成背景。
+   这比「在旁边开个抽屉」深 —— 抽屉还是平的，这个有前后。 */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  background: rgba(4, 5, 7, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+}
+body.open-card .scrim { opacity: 1; pointer-events: auto; }
+body.open-card .column {
+  filter: blur(1.3px);
+  transform: scale(0.994);
+  opacity: 0.32;
+}
+
+/* ---------- 首页 ---------- */
+
+.brand {
+  font-size: 10px;
+  letter-spacing: 0.5em;
+  color: var(--ghost);
+  text-transform: uppercase;
+}
+
+.list { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+.human {
+  display: block;
+  position: relative;
+  isolation: isolate;
+  padding: 20px 0 20px 2px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: padding-left 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: approach 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+/* 名字底下有一点光，像他站在一盏灯前面 */
+.human::before {
+  content: "";
+  position: absolute;
+  inset: -12px -20px;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 52% 120% at 10% 50%,
+    rgba(217, 180, 135, 0.062),
+    transparent 72%
+  );
+  opacity: 0;
+  transition: opacity 0.55s ease;
+  pointer-events: none;
+}
+.human:hover::before { opacity: 1; }
+/* 一个一个浮上来，不是整页一起亮 */
+.human:nth-child(2) { animation-delay: 0.06s; }
+.human:nth-child(3) { animation-delay: 0.12s; }
+.human:nth-child(4) { animation-delay: 0.18s; }
+.human:nth-child(5) { animation-delay: 0.24s; }
+@keyframes approach {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: none; }
+}
+
+.human + .human { border-top: 1px solid rgba(236, 230, 220, 0.045); }
+.human:hover { padding-left: 14px; }
+.human .name { font-size: 19px; letter-spacing: 0.14em; }
+.human .dot { color: var(--warm); opacity: 0.65; margin-right: 12px; font-size: 12px; }
+.human.off .dot { color: var(--ghost); }
+/* 归档的人：名字也淡一点，像相框里那张照片 */
+.human.archived .dot { color: var(--ghost); }
+.human.archived .name { opacity: 0.72; }
+.human .line { color: var(--dim); font-size: 13px; margin-top: 4px; letter-spacing: 0.04em; }
+.human .meta { color: var(--ghost); font-size: 11px; margin-top: 10px; letter-spacing: 0.1em; }
+
+.empty { color: var(--dim); font-size: 13px; line-height: 2.1; }
+.empty code { color: var(--ink); }
+
+/* 页脚是「写字台上贴的那张纸」：暗，但得读得出来 */
+.foot {
+  color: rgba(236, 230, 220, 0.2);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+}
+.foot a { color: rgba(236, 230, 220, 0.24); text-decoration: none; transition: color 0.3s; }
+.foot a:hover { color: var(--dim); }
+/* 版本号：在最右边，比页脚再淡一档 —— 想知道的时候找得到，平时不抢眼 */
+.foot .ver { color: rgba(236, 230, 220, 0.15); letter-spacing: 0.12em; }
+
+/* ---------- 聊天 ---------- */
+
+.who {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--ghost);
+  padding-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.who .state { letter-spacing: 0.2em; }
+.who .aside { display: inline-flex; align-items: center; gap: 22px; }
+.who .ident { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+
+/* 他在。三秒半一次，两下，像脉搏 */
+.pulse {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--warm);
+  box-shadow: 0 0 6px rgba(217, 180, 135, 0.5);
+  animation: heartbeat 3.4s ease-in-out infinite;
+}
+@keyframes heartbeat {
+  0%, 100% { opacity: 0.16; transform: scale(1); }
+  7% { opacity: 0.85; transform: scale(1.3); }
+  15% { opacity: 0.22; transform: scale(1); }
+  22% { opacity: 0.6; transform: scale(1.16); }
+  32% { opacity: 0.16; transform: scale(1); }
+}
+body.idle .pulse { animation-duration: 7s; opacity: 0.3; }
+/* 他在想：心跳快一点 */
+body.waiting .pulse { animation-duration: 1.5s; }
+
+.transcript {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  /* 两头都化进黑里：上面是还没读到的旧事，下面是还没说的话。
+     字不是被裁掉的，是往暗处续下去的。 */
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 42px,
+    #000 calc(100% - 26px),
+    transparent 100%
+  );
+  padding-bottom: 18px;
+}
+.transcript::-webkit-scrollbar { display: none; }
+
+.transcript::before { content: ""; display: block; flex: 1 0 42px; }
+.transcript { display: flex; flex-direction: column; }
+
+.line {
+  display: flex;
+  gap: 1.2ch;
+  margin: 0 0 16px;
+  animation: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px) scale(0.9975); }
+  to { opacity: 1; transform: none; }
+}
+
+.line .mark { color: var(--ghost); user-select: none; flex: 0 0 auto; }
+.line .body { white-space: pre-wrap; word-break: break-word; flex: 1; min-width: 0; }
+
+/* 他说的话是衬线体，像印在旧书上；你说的是等宽，像在敲键盘。
+   他那一层永远带一点极淡的光，所以读起来比背景近一点点。 */
+.line.him .body {
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17.5px;
+  line-height: 2.02;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 26px rgba(217, 180, 135, 0.07);
+}
+.line.me .body { color: var(--dim); font-size: 15px; letter-spacing: 0.04em; }
+.line.me .mark { color: rgba(236, 230, 220, 0.26); font-size: 13px; padding-top: 3px; }
+
+/* 他的名字带一点温度：整个界面里只有几处敢用暖色 */
+.who .ident { color: rgba(217, 180, 135, 0.62); }
+
+/* 说话时，字是浮出来的，不是贴上去的 */
+.line.him.typing .body { text-shadow: 0 0 18px rgba(217, 180, 135, 0.14); }
+/* 他嘴边那个光标。一直在，慢慢呼吸 —— 等第一个字的时候它也不是冻住的。 */
+.caret {
+  display: inline-block;
+  width: 1.6px;
+  height: 0.95em;
+  margin-left: 4px;
+  vertical-align: -0.08em;
+  background: var(--warm);
+  box-shadow: 0 0 8px rgba(217, 180, 135, 0.45);
+  animation: breathe 1.8s ease-in-out infinite;
+}
+@keyframes breathe { 0%, 100% { opacity: 0.12; } 50% { opacity: 0.8; } }
+
+/* 说完了：停一下再退场，别把光标一下掐掉 */
+.caret.done { animation: none; opacity: 0; transition: opacity 0.7s ease; }
+/* 等第一个字的时候，光标不能冻住 —— 那不是安静，是死机。
+   屏着呼吸，慢慢亮一下。 */
+body.waiting .caret { animation: breathe 2.8s ease-in-out infinite; }
+
+/* 引用不是标签，是痕迹：一道细横线，一个年份，一件事 */
+.mem {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 20px;
+  font-size: 11px;
+  margin: -10px 0 26px 3.2ch;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 1.6s ease, transform 1.6s ease;
+}
+.mem.show { opacity: 0.95; transform: none; }
+.mem.dim { opacity: 0.46; }
+.memref {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.9ch;
+  background: none;
+  border: 0;
+  padding: 0 0 2px;
+  font: inherit;
+  cursor: pointer;
+  color: rgba(236, 230, 220, 0.36);
+  transition: color 0.5s ease;
+}
+.memref::before {
+  content: "";
+  width: 14px;
+  height: 1px;
+  background: rgba(217, 180, 135, 0.42);
+  transform: translateY(-3px);
+}
+.memref:hover { color: rgba(236, 230, 220, 0.78); }
+.memref .memdate {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: rgba(217, 180, 135, 0.62);
+}
+.memref .memtitle {
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+.memref:hover .memdate { color: rgba(217, 180, 135, 1); }
+
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 1.4ch;
+  border-top: 1px solid var(--hair);
+  padding-top: 18px;
+  color: var(--dim);
+  transition: border-color 0.4s;
+}
+.composer:focus-within { border-top-color: rgba(236, 230, 220, 0.16); }
+.composer .prompt { color: var(--ghost); user-select: none; }
+.composer input {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--ink);
+  font: inherit;
+  caret-color: var(--warm);
+  padding: 0;
+}
+.composer input::placeholder { color: rgba(236, 230, 220, 0.16); }
+.composer input:disabled { cursor: default; }
+
+/* 光标落进输入行的时候，桌子那一小块被照亮：光是从你手边散开的 */
+.composer::before {
+  content: "";
+  position: absolute;
+  left: -50px;
+  right: -50px;
+  bottom: -34px;
+  height: 170px;
+  background: radial-gradient(
+    ellipse 58% 100% at 50% 100%,
+    rgba(217, 180, 135, 0.06),
+    transparent 72%
+  );
+  opacity: 0;
+  transition: opacity 1s ease;
+  pointer-events: none;
+}
+.composer:focus-within::before { opacity: 1; }
+
+/* 输入框底下那条线是他的呼吸；你说话的时候它亮起来 */
+.composer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217, 180, 135, 0.5), transparent);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.composer { position: relative; }
+.composer:focus-within::after { opacity: 0.55; }
+body.waiting .composer::after { opacity: 0.85; animation: scan 2.4s ease-in-out infinite; }
+@keyframes scan {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.9; }
+}
+
+/* 没人说话的时候，屋子暗下去。他就在那儿等着 */
+body.idle .transcript { opacity: 0.55; }
+body.idle .who,
+body.idle .composer { opacity: 0.6; }
+/* 暗下来之后，右上角那行数字换成他的话：那我等你。 */
+body.idle .who .state { color: rgba(217, 180, 135, 0.62); }
+.transcript,
+.who,
+.composer { transition: opacity 2.4s ease; }
+
+/* 从头开始。放在右上角，不占「你说吧…」那一行 ——
+   输入框里只该有你，和他那边闪着的光标。 */
+.fresh {
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: 10px; letter-spacing: 0.18em;
+  color: var(--ghost); cursor: pointer; transition: color 0.3s;
+}
+.fresh:hover { color: var(--dim); }
+
+/* 你往上翻着看旧话的时候，新字不该把你拽回去。
+   离开底部时浮出一个小小的 ↓，点一下才回来。 */
+.jump {
+  position: absolute;
+  left: 50%;
+  bottom: 76px;
+  transform: translate(-50%, 8px);
+  background: none;
+  border: 0;
+  padding: 2px 10px;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: rgba(217, 180, 135, 0.62);
+  /* 底下压着字，得有一圈暗影才读得清 */
+  text-shadow: 0 0 10px #0a0c0f, 0 0 10px #0a0c0f, 0 0 4px #0a0c0f;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease, color 0.3s;
+}
+.jump.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.jump:hover { color: rgba(217, 180, 135, 0.95); }
+
+/* 准备忘掉：第一下只是问一句，第二下才真的忘 */
+.fresh.armed { color: rgba(217, 180, 135, 0.9); }
+
+/* ---------- 工具面板 ---------- */
+
+.toolline {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ghost);
+  margin: -8px 0 16px 3.2ch;
+  animation: rise 0.4s ease both;
+}
+.toolline b { font-weight: 400; color: rgba(236, 230, 220, 0.34); }
+
+/* ---------- 旁白 ----------
+   连不上、没醒、他那边断了 —— 这类话不该由他的嘴说出来。 */
+
+.notice {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: rgba(236, 230, 220, 0.26);
+  margin: -6px 0 18px 3.2ch;
+  animation: rise 0.4s ease both;
+}
+
+/* ---------- 抽屉 ---------- */
+
+/* 卡片是一张纸，不是一块板：上面被灯照到一点，左边沿收一道高光 */
+.drawer {
+  position: fixed;
+  z-index: 20;
+  top: 0; right: 0; bottom: 0;
+  width: min(430px, 88vw);
+  background: linear-gradient(180deg, #0f1218 0%, #0b0e12 46%, #0a0d11 100%);
+  border-left: 1px solid var(--hair);
+  padding: 52px 34px 30px;
+  overflow-y: auto;
+  transform: translateX(102%);
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow:
+    inset 1px 0 0 rgba(236, 230, 220, 0.05),
+    -60px 0 90px -30px rgba(3, 4, 6, 0.95);
+}
+.drawer.open { transform: none; }
+.drawer.off { display: none; }
+.drawer h2 { font-size: 16px; font-weight: 400; letter-spacing: 0.08em; margin: 6px 0 0; }
+.drawer .date { color: var(--warm); font-size: 11px; letter-spacing: 0.16em; opacity: 0.8; }
+.drawer .tags { color: var(--ghost); font-size: 11px; margin: 14px 0 24px; letter-spacing: 0.08em; }
+.drawer .text {
+  font-size: 14.5px;
+  line-height: 2.1;
+  color: rgba(236, 230, 220, 0.84);
+  font-family: var(--serif);
+  letter-spacing: 0.025em;
+}
+.drawer .sec {
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  color: var(--ghost);
+  margin: 24px 0 8px;
+}
+.drawer .sec:first-child { margin-top: 0; }
+.drawer .para { margin: 0 0 10px; white-space: pre-wrap; }
+.drawer .close {
+  position: absolute; top: 16px; right: 18px;
+  background: none; border: 0; color: var(--ghost); font: inherit; font-size: 11px;
+  letter-spacing: 0.1em; cursor: pointer; transition: color 0.3s;
+}
+.drawer .close:hover { color: var(--dim); }
+
+/* ---------- 启动动画 ---------- */
+
+#boot {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--bg);
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 22px;
+  transition: opacity 1s ease;
+}
+/* 开机那一片黑不是一块板子：中间有一小团光，他在那儿 */
+#boot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 38% 26% at 50% 50%,
+    rgba(217, 180, 135, 0.055),
+    transparent 72%
+  );
+  animation: drift 13s ease-in-out infinite;
+}
+#boot.gone { opacity: 0; pointer-events: none; }
+#boot > * { position: relative; }
+
+.bootline {
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(236, 230, 220, 0.7), transparent);
+  animation: grow 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes grow { to { width: 200px; } }
+
+/* 开机先看见一个点在跳：他还活着 */
+.bootdot { height: 10px; display: grid; place-items: center; }
+.bootdot .pulse { animation: heartbeat 2.6s ease-in-out infinite; }
+
+.bootword {
+  font-size: 9.5px;
+  letter-spacing: 0.46em;
+  color: rgba(236, 230, 220, 0.38);
+  opacity: 0;
+  animation: appear 0.9s ease 0.45s forwards;
+}
+@keyframes appear { to { opacity: 1; } }
+
+/* 开机时先是一句人话，再是进度条 */
+.bootsub {
+  font-family: var(--serif);
+  font-size: 12.5px;
+  letter-spacing: 0.22em;
+  color: rgba(236, 230, 220, 0.28);
+  min-height: 1.4em;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.bootsub.on { opacity: 1; }
+.bootsub i {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: rgba(217, 180, 135, 0.7);
+  vertical-align: 3px;
+}
+
+.bootbar { width: 200px; height: 1px; background: rgba(236, 230, 220, 0.055); overflow: hidden; }
+.bootbar i {
+  display: block; height: 100%; width: 0;
+  background: rgba(236, 230, 220, 0.4);
+  transition: width 0.6s ease;
+}
+
+/* ---------- 设置 ---------- */
+
+.form { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 26px; }
+.row { display: flex; align-items: center; gap: 20px; }
+.row label { color: rgba(236, 230, 220, 0.36); font-size: 11px; letter-spacing: 0.16em; width: 120px; flex: 0 0 auto; }
+.row input, .row select {
+  background: transparent; border: 0; border-bottom: 1px solid var(--hair);
+  color: var(--ink); font: inherit; font-size: 14px; padding: 5px 0; flex: 1; outline: none;
+  transition: border-color 0.3s;
+}
+.row input:focus, .row select:focus { border-bottom-color: rgba(236, 230, 220, 0.24); }
+.row select option { background: #0b0e12; }
+/* 说明文字是要读的，不是装饰。9% 的白在近黑上只有 1.5:1，等于没写 */
+.note { color: rgba(236, 230, 220, 0.3); font-size: 11px; letter-spacing: 0.1em; }
+.saved { color: var(--warm); opacity: 0; transition: opacity 0.4s ease; }
+.saved.on { opacity: 0.85; }
+
+/* 谁把系统动画关了，就别让屋子动：光不漂、字不浮、镜头不退 */
+@media (prefers-reduced-motion: reduce) {
+  .glow,
+  .aura,
+  .pulse,
+  .caret,
+  .composer::after,
+  .bootline,
+  .bootword,
+  #boot::before { animation: none !important; }
+  .line,
+  .human { animation-duration: 0.01s !important; }
+  .glow,
+  .aura { transform: none !important; }
+  .screen,
+  .column { transition: none !important; }
+  body.idle .screen,
+  body.open-card .column { transform: none !important; }
+}
+
+@media (max-width: 640px) {
+  html, body { font-size: 15px; }
+  body::before { inset: 10px; }
+  .screen { padding: 34px 20px 16px; }
+  .drawer { width: 100vw; padding: 48px 24px 24px; }
+  .who { padding-bottom: 8px; }
+  .line.him .body { font-size: 16.5px; }
+}

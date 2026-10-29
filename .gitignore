@@ -1,0 +1,35 @@
+# 便携工具链（体积大，可随时重下）
+vendor/
+
+# 模型权重
+models/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+pytest-of-*/
+
+# Node
+node_modules/
+
+# 运行时产物
+logs/
+data/
+*.log
+
+# 本地配置（可能含 key）
+config.toml
+
+# 临时
+*.zip
+dist/
+
+# 系统杂物
+.DS_Store
+Thumbs.db
+desktop.ini

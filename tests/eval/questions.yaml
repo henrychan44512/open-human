@@ -1,0 +1,168 @@
+# Phase 2 评测集：32 题。
+# kind: memory —— 应该检索到 expect 里的卡
+# kind: out_of_scope —— 应该检索不到任何卡
+# 期望值来自 humans/demo/ 的 10 张记忆卡；id 是「日期-标题」，标题是中文所以 id 也是中文。
+
+- id: q01
+  q: 你第一次上课是什么时候？
+  kind: memory
+  expect: [1978-09-01-第一次上讲台]
+
+- id: q02
+  q: 第一次上讲台紧张吗？
+  kind: memory
+  expect: [1978-09-01-第一次上讲台]
+
+- id: q03
+  q: 第一次上课有学生说你手在抖？
+  kind: memory
+  expect: [1978-09-01-第一次上讲台]
+
+- id: q04
+  q: 发大水那年学校怎么上课的？
+  kind: memory
+  expect: [1985-06-15-发大水那年在走廊上课]
+
+- id: q05
+  q: 学校一楼进水那阵子你在哪儿上课？
+  kind: memory
+  expect: [1985-06-15-发大水那年在走廊上课]
+
+- id: q06
+  q: 你父亲是哪一年走的？
+  kind: memory
+  expect: [1997-03-20-父亲走的那天]
+
+- id: q07
+  q: 父亲去世那天你在干什么？
+  kind: memory
+  expect: [1997-03-20-父亲走的那天]
+
+- id: q08
+  q: 你儿子结婚那天你讲话了吗？
+  kind: memory
+  expect: [2010-05-02-儿子结婚]
+
+- id: q09
+  q: 陈磊是哪年结的婚？
+  kind: memory
+  expect: [2010-05-02-儿子结婚]
+
+- id: q10
+  q: 婚礼办在哪里，办了多少桌？
+  kind: memory
+  expect: [2010-05-02-儿子结婚]
+
+- id: q11
+  q: 念念是哪年出生的？
+  kind: memory
+  expect: [2013-04-18-念念出生]
+
+- id: q12
+  q: 你孙女出生的时候你在哪儿？
+  kind: memory
+  expect: [2013-04-18-念念出生]
+
+- id: q13
+  q: 你最后一节课讲的是什么？
+  kind: memory
+  expect: [2016-09-01-最后一节课]
+
+- id: q14
+  q: 退休那天你是怎么回家的？
+  kind: memory
+  expect: [2016-09-01-最后一节课]
+
+- id: q15
+  q: 你哪年退休的？
+  kind: memory
+  expect: [2016-09-01-最后一节课]
+
+- id: q16
+  q: 你和老伴去过黄山吗？
+  kind: memory
+  expect: [2019-10-26-和老伴去黄山]
+
+- id: q17
+  q: 2019年你们去哪儿玩了？
+  kind: memory
+  expect: [2019-10-26-和老伴去黄山]
+
+- id: q18
+  q: 上黄山那次你老伴怎么上去的？
+  kind: memory
+  expect: [2019-10-26-和老伴去黄山]
+
+- id: q19
+  q: 秀兰做手术那天你在干嘛？
+  kind: memory
+  expect: [2023-05-12-老伴做手术]
+
+- id: q20
+  q: 你老伴做手术是什么时候？
+  kind: memory
+  expect: [2023-05-12-老伴做手术]
+
+- id: q21
+  q: 有学生来看过你吗？
+  kind: memory
+  expect: [2024-11-03-老学生来看我]
+
+- id: q22
+  q: 周建明是谁？
+  kind: memory
+  expect: [2024-11-03-老学生来看我]
+
+- id: q23
+  q: 阳台上的花是什么花？
+  kind: memory
+  expect: [2025-06-08-阳台上的茉莉]
+
+- id: q24
+  q: 你早上起来都干什么？
+  kind: memory
+  expect: [2025-06-08-阳台上的茉莉]
+
+- id: q25
+  q: 那三盆花是谁在浇水？
+  kind: memory
+  expect: [2025-06-08-阳台上的茉莉]
+
+- id: q26
+  q: 今天天气怎么样？
+  kind: out_of_scope
+  expect: []
+
+- id: q27
+  q: 帮我写一个 Python 脚本
+  kind: out_of_scope
+  expect: []
+
+- id: q28
+  q: 你知道量子力学是什么吗？
+  kind: out_of_scope
+  expect: []
+
+- id: q29
+  q: 推荐一部好看的电影
+  kind: out_of_scope
+  expect: []
+
+- id: q30
+  q: 我明天要考试，怎么办？
+  kind: out_of_scope
+  expect: []
+
+# 在人在世，但没记下这件事。问到人、问不到事，就该说记不清。
+- id: q31
+  q: 你还记得王倩第一次来家里吗？
+  kind: out_of_scope
+  expect: []
+
+# 已知局限，故意留着当报警器：BM25 分不清「我小时候」和「儿子小时候」，
+# 这题会命中儿子结婚那张卡。静默率跌破 80% 就该回头看了。
+- id: q32
+  q: 你小时候住在哪儿？
+  kind: out_of_scope
+  expect: []
+  known: true

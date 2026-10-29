@@ -1,0 +1,59 @@
+[project]
+name = "openhuman"
+version = "0.1.0"
+description = "打开一个人格文件夹，AI 以第一人称成为他。"
+requires-python = ">=3.12"
+readme = "README.md"
+license = { text = "GPL-3.0-only" }
+authors = [{ name = "henrychan44512", email = "henrychan44512@gmail.com" }]
+keywords = ["llm", "persona", "local-first", "llama.cpp", "chinese", "windows"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "pydantic>=2.9",
+    "pyyaml>=6.0",
+    "python-frontmatter>=1.1",
+    "httpx>=0.27",
+    "typer>=0.12",
+    "rich>=13.7",
+    # HTTP 层：serve 与 SSE 流
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    # Phase 2 检索：中文分词 + BM25（BUILD.md §6 D-12）
+    "jieba>=0.42",
+    "rank-bm25>=0.2.2",
+]
+
+[project.scripts]
+oh = "openhuman.cli:app"
+
+[project.urls]
+Repository = "https://github.com/henrychan44512/open-human"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openhuman"]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

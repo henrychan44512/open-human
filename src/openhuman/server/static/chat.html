@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>html { background: #0a0c0f; }</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>待唤醒</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0c0f'/%3E%3Ccircle cx='16' cy='16' r='4.5' fill='%23d9b487'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/s/style.css">
+</head>
+<body>
+
+<div id="boot">
+  <div class="bootdot"><i class="pulse"></i></div>
+  <div class="bootline"></div>
+  <div class="bootword">PERSONA LOADING</div>
+  <div class="bootbar"><i id="bootbar"></i></div>
+  <div class="bootsub" id="bootsub"></div>
+</div>
+
+<div class="aura"></div>
+<div class="glow"></div>
+<div class="vignette"></div>
+<div class="screen">
+  <div class="column">
+    <div class="who">
+      <a class="ident" href="/" title="回到门口"><i class="pulse"></i><span id="who">—</span></a>
+      <span class="aside">
+        <span class="state" id="state"></span>
+        <button class="fresh" id="fresh" title="重新开始一段对话">[新]</button>
+      </span>
+    </div>
+    <div class="transcript" id="transcript" role="log" aria-label="对话"></div>
+    <button class="jump" id="jump" aria-label="回到最新">↓</button>
+    <div class="composer" id="composer">
+      <span class="prompt">›</span>
+      <input id="input" type="text" autocomplete="off" spellcheck="false" placeholder="你说吧…" disabled>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="drawer off" id="drawer">
+  <button class="close" id="drawer-close">关闭 ✕</button>
+  <div class="date" id="d-date"></div>
+  <h2 id="d-title"></h2>
+  <div class="tags" id="d-tags"></div>
+  <div class="text" id="d-text"></div>
+</aside>
+
+<script src="/s/core.js"></script>
+<script src="/s/chat.js"></script>
+</body>
+</html>
